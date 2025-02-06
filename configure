@@ -179,7 +179,56 @@ jdk-java-build:
 		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/text -name "*.java") \\
 		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/util -name "*.java") \\
 		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/misc -name "*.java")
-	@\$(JAR) cf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) .
+	@\$(JAR) cf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/io
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/lang
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/lang/annotation
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/lang/invoke
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/lang/ref
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/lang/reflect
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/math
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/net
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/channels
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/channels/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/charset
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/charset/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/file
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/file/attribute
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/nio/file/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/security
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/security/cert
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/security/interfaces
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/security/spec
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/text
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/text/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/time
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/time/chrono
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/time/format
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/time/temporal
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/time/zone
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/concurrent
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/concurrent/atomic
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/concurrent/locks
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/function
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/jar
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/logging
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/regex
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/stream
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) java/util/zip
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/crypto
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/crypto/interfaces
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/crypto/spec
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/net
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/net/ssl
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/script
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/auth
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/auth/callback
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/auth/login
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/auth/spi
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/auth/x500
+	@\$(JAR) uf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) javax/security/cert
 	@echo "Build completed successfully!"
 	@echo "Generated rt.jar can be found at: \$(DISTDIR)/rt.jar"
 EOF
