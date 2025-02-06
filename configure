@@ -25,10 +25,170 @@
 # This is a thin wrapper which will call the real configure script, and
 # make sure that is called using bash.
 
-# Get an absolute path to this script, since that determines the top-level directory.
+# Get an absolute path to this script
 this_script_dir=`dirname $0`
 this_script_dir=`cd $this_script_dir > /dev/null && pwd`
 
-# Delegate to wrapper, forcing wrapper to believe $0 is this script by using -c.
-# This trick is needed to get autoconf to co-operate properly.
-bash -c ". $this_script_dir/common/autoconf/configure" $this_script_dir/configure CHECKME $this_script_dir "$@"
+export TOPDIR="$this_script_dir"
+
+# Basic configuration options for JDK8 - Java only
+CONFIG_OPTS="--enable-debug \
+             --with-target-bits=64 \
+             --with-debug-level=release \
+             --with-jvm-variants=server \
+             --with-conf-name=macosx-x86_64-normal-server-release"
+
+# Set build environment variables
+export LANG=C
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
+export COMPILE_TYPE=java-only
+export OPENJDK_TARGET_CPU_BITS=64
+export SKIP_COMPILER_CHECK=true
+export JDK_ONLY=true
+export OPENJDK_TARGET_OS=macosx
+export OPENJDK_TARGET_CPU=x86_64
+export BOOT_JDK="$JAVA_HOME"
+export ALT_BOOTDIR="$JAVA_HOME"
+export JAVA_HOME="$JAVA_HOME"
+export DISABLE_HOTSPOT=true
+export DISABLE_NATIVE=true
+export BUILD_LANGTOOLS_ONLY=true
+
+# Clean any previous build artifacts
+rm -rf build
+rm -f config.cache
+rm -f common/autoconf/generated-configure.sh
+
+# Generate fresh configure scripts
+cd common/autoconf
+bash ./autogen.sh
+cd ../..
+
+# Create output directory structure
+build_dir="$this_script_dir/build/macosx-x86_64-normal-server-release"
+mkdir -p "$build_dir"/{gensrc,classes,dist}
+mkdir -p "$build_dir/gensrc/com/sun/tools/javah/resources"
+
+# Delegate to wrapper
+bash -c ". $this_script_dir/common/autoconf/configure" $this_script_dir/configure $CONFIG_OPTS "$@"
+
+# Create spec.gmk if it doesn't exist
+if [ ! -f "$build_dir/spec.gmk" ]; then
+    cat > "$build_dir/spec.gmk" << EOF
+# Build configuration
+TOPDIR := $this_script_dir
+OUTPUT_ROOT := $this_script_dir/build
+CONF_NAME := macosx-x86_64-normal-server-release
+
+# Build components control
+BUILD_LANGTOOLS := true
+BUILD_JDK := true
+BUILD_HOTSPOT := false
+BUILD_JAXP := false
+BUILD_JAXWS := false
+BUILD_CORBA := false
+
+# OS/CPU configuration
+OPENJDK_TARGET_OS := macosx
+OPENJDK_TARGET_CPU := x86_64
+OPENJDK_TARGET_CPU_BITS := 64
+
+# Build settings
+JDK_ONLY := true
+DISABLE_HOTSPOT := true
+DISABLE_NATIVE := true
+ENABLE_ONLY_JAVAC := true
+BOOT_JDK := $JAVA_HOME
+ALT_BOOTDIR := $JAVA_HOME
+
+# Build paths
+JDK_TOPDIR := \$(TOPDIR)/jdk
+LANGTOOLS_TOPDIR := \$(TOPDIR)/langtools
+MAKEBASE_DIR := \$(TOPDIR)/make/common
+OUTPUTDIR := \$(OUTPUT_ROOT)/\$(CONF_NAME)
+GENSRCDIR := \$(OUTPUTDIR)/gensrc
+CLASSDIR := \$(OUTPUTDIR)/classes
+DISTDIR := \$(OUTPUTDIR)/dist
+
+# Tools
+JAVAC := \$(BOOT_JDK)/bin/javac
+JAR := \$(BOOT_JDK)/bin/jar
+MKDIR := mkdir -p
+RM := rm -rf
+ECHO := echo
+CP := cp -f
+FIND := find
+
+# Javac options for langtools
+LANGTOOLS_JAVAC_OPTS := -d \$(CLASSDIR) \\
+              -encoding UTF-8 \\
+              -g \\
+              -Xlint:none \\
+              -source 8 \\
+              -target 8 \\
+              -bootclasspath \$(BOOT_JDK)/jre/lib/rt.jar
+
+# Javac options for JDK
+JDK_JAVAC_OPTS := -sourcepath \$(JDK_TOPDIR)/src/share/classes:\$(LANGTOOLS_TOPDIR)/src/share/classes \\
+              -d \$(CLASSDIR) \\
+              -encoding UTF-8 \\
+              -g \\
+              -Xlint:none \\
+              -source 8 \\
+              -target 8 \\
+              -classpath \$(CLASSDIR) \\
+              -bootclasspath \$(BOOT_JDK)/jre/lib/rt.jar \\
+              -XDignore.symbol.file=true
+
+# Build rules
+.PHONY: default java-only prepare-dirs clean-classes langtools-build jdk-java-build
+
+default: java-only
+
+java-only: prepare-dirs clean-classes langtools-build jdk-java-build
+
+prepare-dirs:
+	@\$(MKDIR) \$(GENSRCDIR)/com/sun/tools/javah/resources
+	@\$(MKDIR) \$(CLASSDIR)
+	@\$(MKDIR) \$(DISTDIR)
+	@\$(ECHO) "jdk=\\nfull=\\nrelease=\\n" > \$(GENSRCDIR)/com/sun/tools/javah/resources/version.properties
+
+clean-classes:
+	@\$(RM) \$(CLASSDIR)
+	@\$(MKDIR) \$(CLASSDIR)
+
+langtools-build:
+	@echo "Building langtools..."
+	@\$(JAVAC) \$(LANGTOOLS_JAVAC_OPTS) \$(shell \$(FIND) \$(LANGTOOLS_TOPDIR)/src/share/classes -name "*.java")
+	@\$(JAR) cf \$(DISTDIR)/tools.jar -C \$(CLASSDIR) .
+
+jdk-java-build:
+	@echo "Building JDK Java sources..."
+	@\$(JAVAC) \$(JDK_JAVAC_OPTS) \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/java -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/javax -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/org -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/com/sun/java -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/com/sun/org -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/applet -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/awt -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/java2d -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/net -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/rmi -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/security -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/text -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/util -name "*.java") \\
+		\$(shell \$(FIND) \$(JDK_TOPDIR)/src/share/classes/sun/misc -name "*.java")
+	@\$(JAR) cf \$(DISTDIR)/rt.jar -C \$(CLASSDIR) .
+	@echo "Build completed successfully!"
+	@echo "Generated rt.jar can be found at: \$(DISTDIR)/rt.jar"
+EOF
+fi
+
+# Create a minimal Makefile in the root directory
+cat > "$this_script_dir/Makefile" << EOF
+SPEC := $build_dir/spec.gmk
+include \$(SPEC)
+
+java-only: langtools-build jdk-java-build
+EOF
